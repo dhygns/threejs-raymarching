@@ -1,0 +1,17 @@
+{
+  "name": "codepen",
+  "version": "1.0.0",
+  "description": "codepen test",
+  "main": "index.js",
+  "scripts": {
+    "start": "node server"
+  },
+  "keywords": [
+    "codepen"
+  ],
+  "author": "donghyeon kim",
+  "license": "MIT",
+  "devDependencies": {
+    "express": "^4.16.3"
+  }
+}
