@@ -47,6 +47,15 @@ class MainScene extends THREE.Scene {
 
         this.time = 0.0;
 
+        this.cubemap = THREE.ImageUtils.loadTextureCube([
+            './imgs/px.jpg',
+            './imgs/nx.jpg',
+            './imgs/py.jpg',
+            './imgs/ny.jpg',
+            './imgs/pz.jpg',
+            './imgs/nz.jpg'
+        ]);
+
         this.rendertarget = new THREE.WebGLRenderTarget(width, height, {
             minFilter : THREE.LinearFilter,
             magFilter : THREE.LinearFilter
@@ -56,6 +65,7 @@ class MainScene extends THREE.Scene {
         this.cam = new THREE.PerspectiveCamera(45, width / height, 1.0, 1000.0);
 
         this.uniforms = {
+            uSkybox : { type : "t", value : this.cubemap},
             //View Stuff
             uViewRatio : { type : "f", value : width / height},
             uBlur : { type : "f", value : 0.001},
@@ -89,6 +99,8 @@ class MainScene extends THREE.Scene {
                 }
                 `,
                 fragmentShader : `
+                uniform samplerCube uSkybox;
+
                 uniform float uViewRatio;
                 uniform vec3 uCamPosition;
                 uniform vec3 uCamRotation;
@@ -198,9 +210,9 @@ class MainScene extends THREE.Scene {
                                 uObjectF.a * 0.15 * cos(uTime * 0.272), 
                                 uObjectA.a * 0.15 * cos(uTime * 0.091)),  
                             vec3( 
-                                uObjectB.a * 0.24 + 0.01, 
-                                uObjectC.a * 0.24 + 0.01, 
-                                uObjectD.a * 0.24 + 0.01), currdot, normal, dep);
+                                0.1, 
+                                0.1, 
+                                0.1), currdot, normal, dep);
 
                         if(retdep + dep > 1.0) {
                             dep = 1.0 - retdep;
@@ -216,8 +228,6 @@ class MainScene extends THREE.Scene {
                             retcol += color * dep;
                         }
                     }
-                    
-                    if(retdep < 0.01) discard;
 
                     retnor = normalize(retnor);
 
@@ -229,7 +239,7 @@ class MainScene extends THREE.Scene {
                     retdep = smoothstep(0.99, 1.00, retdep);
 
                     retcol = 
-                        retcol * retdep * 2.5 + 
+                        textureCube(uSkybox, retnor).rgb * retdep * 2.5 + 
                         retcol * smoothstep(-0.5, 1.0, briA) * 8.5 + 
                         (vec3(0.5) + retcol) * smoothstep( 0.95, 0.98, briA) + 
                         (vec3(0.5) + retcol) * smoothstep( 0.994, 0.995, briB) + 
@@ -237,7 +247,7 @@ class MainScene extends THREE.Scene {
 
                     retcol = max(retcol, vec3(0.0, 0.1, 0.2) * smoothstep(-1.0, 3.0, rfl)); 
 
-                    gl_FragColor = vec4(retcol, retdep);
+                    gl_FragColor = vec4(mix(textureCube(uSkybox, camdir + vec3(x, y, 0.0)).rgb, retcol, retdep), 1.0);
                 }
                 `
             })
@@ -248,11 +258,11 @@ class MainScene extends THREE.Scene {
     {
         this.time += dt * 0.001;
 
-        this.cam.position.x = 3.0 * Math.sin(this.time * 0.1 * Math.PI);
+        this.cam.position.x = 3.0 * Math.sin(this.time * 0.01 * Math.PI);
         this.cam.position.y = 0.0;
-        this.cam.position.z =-3.0 * Math.cos(this.time * 0.1 * Math.PI);
+        this.cam.position.z =-3.0 * Math.cos(this.time * 0.01 * Math.PI);
 
-        this.cam.rotation.y = this.time * 0.1 * Math.PI;
+        this.cam.rotation.y = this.time * 0.01 * Math.PI;
 
         this.uniforms.uCamFov.value = this.cam.fov;
         this.uniforms.uTime.value = this.time;
